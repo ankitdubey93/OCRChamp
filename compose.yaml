@@ -1,0 +1,60 @@
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env.docker   # delivers POSTGRES_USER / PASSWORD / DB directly to the container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "5434:5432"   # expose to host for local psql / migrations
+
+  # ── Express backend ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      NODE_ENV:      production
+      PORT:          3000
+      FRONTEND_URL:  http://localhost:80
+      PG_HOST:       db
+      PG_PORT:       5432
+      PG_USER:       ${POSTGRES_USER}
+      PG_PASSWORD:   ${POSTGRES_PASSWORD}
+      PG_DATABASE:   ${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── React / Vite → nginx ────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:
