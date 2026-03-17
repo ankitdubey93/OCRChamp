@@ -16,7 +16,11 @@ export async function uploadInvoice(req: Request, res: Response, next: NextFunct
 
 export async function getInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const invoice = await invoiceService.getInvoiceById(req.params['id'] ?? '');
+    const { id } = req.params;
+    if (typeof id !== 'string' || id === '') {
+      throw new ApiError(400, 'Invalid invoice id');
+    }
+    const invoice = await invoiceService.getInvoiceById(id);
     if (!invoice) throw new ApiError(404, 'Invoice not found');
     res.json(invoice);
   } catch (err) {
