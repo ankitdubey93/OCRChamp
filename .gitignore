@@ -4,3 +4,10 @@ dist/
 .env.docker
 *.tsbuildinfo
 coverage/
+
+# Test sample files
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.webp
