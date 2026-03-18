@@ -1,19 +1,16 @@
-export interface LineItem {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-}
-
-export interface Invoice {
-  id: string;
-  vendorName: string | null;
-  invoiceNumber: string | null;
-  invoiceDate: string | null;
-  dueDate: string | null;
-  totalAmount: number | null;
-  lineItems: LineItem[];
-  rawText: string | null;
-  status: 'pending' | 'processed' | 'failed';
-  createdAt: string;
+/**
+ * Matches the row returned by the backend's invoices table.
+ * total_amount and tax_amount are strings because pg returns NUMERIC columns
+ * as strings to preserve full decimal precision. Use parseFloat() at render time.
+ */
+export interface InvoiceRow {
+  id:             string;
+  invoice_number: string | null;
+  date:           string | null;
+  vendor_name:    string | null;
+  total_amount:   string | null;
+  tax_amount:     string | null;
+  raw_text:       string | null;
+  status:         string;
+  created_at:     string;
 }
